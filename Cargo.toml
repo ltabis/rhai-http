@@ -1,5 +1,5 @@
 [package]
-name = "rhai_http"
+name = "rhai-http"
 version = "0.1.0"
 edition = "2021"
 authors = ["ltabis <ltabis.pro@gmail.com>"]
@@ -9,4 +9,4 @@ authors = ["ltabis <ltabis.pro@gmail.com>"]
 crate-type = ["cdylib"]
 
 [dependencies]
-rhai = { version = "1.11" }
+rhai = { version = "1.18" }
