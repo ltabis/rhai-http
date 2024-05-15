@@ -1,0 +1,12 @@
+[package]
+name = "rhai_http"
+version = "0.1.0"
+edition = "2021"
+authors = ["ltabis <ltabis.pro@gmail.com>"]
+
+[lib]
+# You could also use Rust's unstable ABI with "dylib".
+crate-type = ["cdylib"]
+
+[dependencies]
+rhai = { version = "1.11" }
