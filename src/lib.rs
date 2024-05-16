@@ -11,6 +11,8 @@ pub struct GetParameters {
 
 #[export_module]
 mod rhai_http {
+    use std::str::FromStr;
+
     pub type Client = reqwest::blocking::Client;
 
     /// Create a new HTTP client.
@@ -41,13 +43,14 @@ mod rhai_http {
                 headers
                     .iter()
                     .map(|(k, v)| {
-                        let name = k.to_string().try_into().unwrap();
-                        let value = v.to_string().try_into().unwrap();
+                        let name = reqwest::header::HeaderName::from_str(k)
+                            .map_err::<Box<EvalAltResult>, _>(|error| error.to_string().into())?;
+                        let value = reqwest::header::HeaderValue::from_str(&v.to_string())
+                            .map_err::<Box<EvalAltResult>, _>(|error| error.to_string().into())?;
 
                         Ok((name, value))
                     })
-                    .collect::<Result<reqwest::header::HeaderMap, reqwest::Error>>()
-                    .map_err::<Box<rhai::EvalAltResult>, _>(|error| error.to_string().into())?,
+                    .collect::<Result<reqwest::header::HeaderMap, Box<EvalAltResult>>>()?,
             )
             .body(body)
             .send()
