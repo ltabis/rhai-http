@@ -23,6 +23,7 @@ mod rhai_http {
             .map_err(|error| error.to_string().into())
     }
 
+    // TODO: when does json should be returned ?
     /// Execute a GET request.
     ///
     /// # rhai-autodocs:index:2
