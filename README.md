@@ -1,13 +1,5 @@
 # rhai-http
 
-> Add description here.
+> This is a work in progress.
 
-## Setup
-
-Set the same hashing key in `.cargo/config.toml` than the one in your Rust code that will import this dynamic library.
-
-## Build
-
-```rust
-$ cargo build
-```
+A Rhai package that exposes a simple http API to make get request, along an entrypoint for dynamic libraries to be used with [rhai-dylib](https://github.com/rhaiscript/rhai-dylib)
