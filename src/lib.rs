@@ -23,6 +23,9 @@ pub struct GetParameters {
 mod rhai_http {
     use std::str::FromStr;
 
+    /// A HTTP client that can execute HTTP requests. See `http::client` to create an instance.
+    ///
+    /// # rhai-autodocs:index:1
     pub type Client = reqwest::blocking::Client;
 
     /// Create a new HTTP client. Can be used to query HTTP endpoints.
@@ -38,7 +41,7 @@ mod rhai_http {
     /// let client = http::client();
     /// ```
     ///
-    /// # rhai-autodocs:index:1
+    /// # rhai-autodocs:index:2
     #[rhai_fn(return_raw)]
     pub fn client() -> Result<Client, Box<rhai::EvalAltResult>> {
         reqwest::blocking::Client::builder()
@@ -74,7 +77,7 @@ mod rhai_http {
     /// print(response)
     /// ```
     ///
-    /// # rhai-autodocs:index:2
+    /// # rhai-autodocs:index:3
     #[rhai_fn(global, pure, return_raw)]
     pub fn get(
         client: &mut Client,
@@ -114,8 +117,10 @@ mod rhai_http {
 
 def_package! {
     /// Package to build and send http requests.
-    pub HttpPackage(module) {
-        combine_with_exported_module!(module, "http", rhai_http);
+    pub HttpPackage(_module) {} |> |engine| {
+        // NOTE: since package modules items are registered in the global namespace,
+        //       this is used to move the items in the `http` namespace.
+        engine.register_static_module("http", rhai::exported_module!(rhai_http).into());
     }
 }
 
@@ -133,7 +138,7 @@ pub mod test {
         let body: String = engine
             .eval(
                 r#"
-let client = client();
+let client = http::client();
 
 client.get(#{ url: "http://example.com" })"#,
             )
