@@ -12,7 +12,7 @@ pub enum Output {
 pub struct GetParameters {
     url: String,
     #[serde(default)]
-    headers: rhai::Map,
+    headers: rhai::Array,
     #[serde(default)]
     body: rhai::Dynamic,
     #[serde(default)]
@@ -95,13 +95,22 @@ mod rhai_http {
             .headers(
                 headers
                     .iter()
-                    .map(|(k, v)| {
-                        let name = reqwest::header::HeaderName::from_str(k)
-                            .map_err::<Box<EvalAltResult>, _>(|error| error.to_string().into())?;
-                        let value = reqwest::header::HeaderValue::from_str(&v.to_string())
-                            .map_err::<Box<EvalAltResult>, _>(|error| error.to_string().into())?;
+                    .map(|header| {
+                        if let Some((name, value)) = header.to_string().split_once(':') {
+                            let name = reqwest::header::HeaderName::from_str(name).map_err::<Box<
+                                EvalAltResult,
+                            >, _>(
+                                |error| error.to_string().into(),
+                            )?;
+                            let value = reqwest::header::HeaderValue::from_str(value)
+                                .map_err::<Box<EvalAltResult>, _>(|error| {
+                                    error.to_string().into()
+                                })?;
 
-                        Ok((name, value))
+                            Ok((name, value))
+                        } else {
+                            Err(format!("'{header}' is not a valid header").into())
+                        }
                     })
                     .collect::<Result<reqwest::header::HeaderMap, Box<EvalAltResult>>>()?,
             )
@@ -194,5 +203,30 @@ client.get(#{ url: "http://example.com" })"#,
 </html>
 "#
         );
+    }
+
+    #[test]
+    fn simple_query_headers() {
+        let mut engine = rhai::Engine::new();
+
+        HttpPackage::new().register_into_engine(&mut engine);
+
+        let body: String = engine
+            .eval(
+                r#"
+let client = http::client();
+
+client.get(#{
+    "url": "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?slug=bitcoin&convert=EUR",
+    "headers": [
+        "X-CMC_PRO_API_KEY: xxx",
+        "Accept: application/json"
+    ],
+})
+"#,
+            )
+            .unwrap();
+
+        println!("{body}");
     }
 }
