@@ -9,7 +9,8 @@ pub enum Output {
 }
 
 #[derive(Clone, serde::Deserialize)]
-pub struct GetParameters {
+pub struct Parameters {
+    method: String,
     url: String,
     #[serde(default)]
     headers: rhai::Array,
@@ -49,11 +50,12 @@ mod rhai_http {
             .map_err(|error| error.to_string().into())
     }
 
-    /// Execute a GET request.
+    /// Execute an HTTP request.
     ///
     /// # Args
     ///
     /// - `parameter`: A map of parameters with the following fields:
+    ///     - `method`: the method to use. (e.g. "POST", "GET", etc.)
     ///     - `url`: Endpoint to query.
     ///     - `headers`: Optional headers to add to the query.
     ///     - `body`: Optional body to add to the query.
@@ -70,28 +72,33 @@ mod rhai_http {
     /// ```js
     /// let client = http::client();
     ///
-    /// let response = client.get(#{
+    /// let response = client.request(#{
+    ///     method: "GET",
     ///     url: "http://example.com"
     /// });
     ///
     /// print(response)
     /// ```
     ///
-    /// # rhai-autodocs:index:3
+    /// # rhai-autodocs:index:2
     #[rhai_fn(global, pure, return_raw)]
-    pub fn get(
+    pub fn request(
         client: &mut Client,
         parameters: rhai::Map,
     ) -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
-        let GetParameters {
+        let Parameters {
+            method,
             url,
             headers,
             body,
             output,
-        } = rhai::serde::from_dynamic::<GetParameters>(&parameters.into())?;
+        } = rhai::serde::from_dynamic::<Parameters>(&parameters.into())?;
+
+        let method = reqwest::Method::from_str(&method)
+            .map_err::<Box<rhai::EvalAltResult>, _>(|error| error.to_string().into())?;
 
         client
-            .get(url)
+            .request(method, url)
             .headers(
                 headers
                     .iter()
@@ -149,7 +156,7 @@ pub mod test {
                 r#"
 let client = http::client();
 
-client.get(#{ url: "http://example.com" })"#,
+client.request(#{ method: "GET", url: "http://example.com" })"#,
             )
             .unwrap();
 
@@ -211,22 +218,24 @@ client.get(#{ url: "http://example.com" })"#,
 
         HttpPackage::new().register_into_engine(&mut engine);
 
-        let body: String = engine
+        let body: rhai::Map = engine
             .eval(
                 r#"
 let client = http::client();
 
-client.get(#{
+client.request(#{
+    "method": "GET",
     "url": "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?slug=bitcoin&convert=EUR",
     "headers": [
         "X-CMC_PRO_API_KEY: xxx",
         "Accept: application/json"
     ],
+    "output": "json",
 })
 "#,
             )
             .unwrap();
 
-        println!("{body}");
+        println!("{body:#?}");
     }
 }
