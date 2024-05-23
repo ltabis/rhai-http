@@ -104,6 +104,9 @@ pub mod rhai_http {
                     .iter()
                     .map(|header| {
                         if let Some((name, value)) = header.to_string().split_once(':') {
+                            let name = name.trim();
+                            let value = value.trim();
+
                             let name = reqwest::header::HeaderName::from_str(name).map_err::<Box<
                                 EvalAltResult,
                             >, _>(
