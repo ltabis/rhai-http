@@ -21,7 +21,7 @@ pub struct Parameters {
 }
 
 #[export_module]
-mod rhai_http {
+pub mod rhai_http {
     use std::str::FromStr;
 
     /// A HTTP client that can execute HTTP requests. See `http::client` to create an instance.
@@ -121,6 +121,7 @@ mod rhai_http {
                     })
                     .collect::<Result<reqwest::header::HeaderMap, Box<EvalAltResult>>>()?,
             )
+            // FIXME: string or blob.
             .body(body.to_string())
             .send()
             .and_then(|response| match output {
