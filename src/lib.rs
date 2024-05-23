@@ -131,7 +131,7 @@ pub mod rhai_http {
                 Output::Text => response.text().map(rhai::Dynamic::from),
                 Output::Json => response.json::<rhai::Map>().map(rhai::Dynamic::from),
             })
-            .map_err(|error| error.to_string().into())
+            .map_err(|error| format!("{error:?}").into())
     }
 }
 
