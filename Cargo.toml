@@ -1,6 +1,6 @@
 [package]
 name = "rhai-http"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["ltabis <ltabis.pro@gmail.com>"]
 description = "HTTP module for the rhai scripting language"
