@@ -3,6 +3,9 @@ name = "rhai-http"
 version = "0.0.0"
 edition = "2021"
 authors = ["ltabis <ltabis.pro@gmail.com>"]
+description = "HTTP module for the rhai scripting language"
+license-file = "./LICENSE"
+repository = "https://github.com/ltabis/rhai-http"
 
 [dependencies]
 rhai = { version = "1.18", features = ["serde"] }
