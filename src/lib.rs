@@ -21,7 +21,7 @@ pub struct Parameters {
 }
 
 #[export_module]
-pub mod rhai_http {
+pub mod api {
     use std::str::FromStr;
 
     /// A HTTP client that can execute HTTP requests. See `http::client` to create an instance.
@@ -80,7 +80,7 @@ pub mod rhai_http {
     /// print(response)
     /// ```
     ///
-    /// # rhai-autodocs:index:2
+    /// # rhai-autodocs:index:3
     #[rhai_fn(global, pure, return_raw)]
     pub fn request(
         client: &mut Client,
@@ -140,7 +140,7 @@ def_package! {
     pub HttpPackage(_module) {} |> |engine| {
         // NOTE: since package modules items are registered in the global namespace,
         //       this is used to move the items in the `http` namespace.
-        engine.register_static_module("http", rhai::exported_module!(rhai_http).into());
+        engine.register_static_module("http", rhai::exported_module!(api).into());
     }
 }
 
