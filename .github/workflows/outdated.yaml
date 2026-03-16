@@ -1,7 +1,6 @@
 name: Outdated
 
 on:
-  pull_request:
   schedule: [cron: "00 7 * * *"]
 
 permissions:
