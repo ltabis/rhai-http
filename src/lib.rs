@@ -1,15 +1,28 @@
+//! A Rhai package that exposes a simple HTTP API to make requests.
+//!
+//! # Example
+//!
+//! ```rust
+//! use rhai::Engine;
+//! use rhai::packages::Package;
+//! use rhai_http::HttpPackage;
+//!
+//! let mut engine = Engine::new();
+//! HttpPackage::new().register_into_engine(&mut engine);
+//! ```
+
 use rhai::{def_package, plugin::*};
 
 #[derive(Default, Clone, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Output {
+enum Output {
     #[default]
     Text,
     Json,
 }
 
 #[derive(Clone, serde::Deserialize)]
-pub struct Parameters {
+struct Parameters {
     method: String,
     url: String,
     #[serde(default)]
@@ -57,9 +70,9 @@ pub mod api {
     /// - `parameter`: A map of parameters with the following fields:
     ///     - `method`: the method to use. (e.g. "POST", "GET", etc.)
     ///     - `url`: Endpoint to query.
-    ///     - `headers`: Optional headers to add to the query.
+    ///     - `headers`: Optional headers to add to the query, formatted as `"Name: Value"` strings.
     ///     - `body`: Optional body to add to the query.
-    ///     - `output`: Output format of the response retrieved by the client, can either be 'text' or 'json'. Defaults to 'text'.
+    ///     - `output`: Output format: `"text"` (default) returns a String, `"json"` returns a Map.
     ///
     /// # Errors
     ///
@@ -75,6 +88,22 @@ pub mod api {
     /// let response = client.request(#{
     ///     method: "GET",
     ///     url: "http://example.com"
+    /// });
+    ///
+    /// print(response)
+    /// ```
+    ///
+    /// ```js
+    /// let client = http::client();
+    ///
+    /// let response = client.request(#{
+    ///     "method": "GET",
+    ///     "url": "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?slug=bitcoin&convert=EUR",
+    ///     "headers": [
+    ///         "X-CMC_PRO_API_KEY: xxx",
+    ///         "Accept: application/json"
+    ///     ],
+    ///     "output": "json",
     /// });
     ///
     /// print(response)
