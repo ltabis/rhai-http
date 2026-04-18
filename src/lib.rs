@@ -141,6 +141,7 @@ pub mod api {
                             >, _>(
                                 |error| error.to_string().into(),
                             )?;
+
                             let value = reqwest::header::HeaderValue::from_str(value)
                                 .map_err::<Box<EvalAltResult>, _>(|error| {
                                     error.to_string().into()
@@ -178,11 +179,16 @@ pub mod test {
     use crate::HttpPackage;
     use rhai::packages::Package;
 
-    #[test]
-    fn simple_query() {
+    fn setup_engine() -> rhai::Engine {
         let mut engine = rhai::Engine::new();
 
         HttpPackage::new().register_into_engine(&mut engine);
+        engine
+    }
+
+    #[test]
+    fn test_simple_query() {
+        let engine = setup_engine();
 
         let body: String = engine
             .eval(
@@ -199,11 +205,8 @@ client.request(#{ method: "GET", url: "http://example.com" })"#,
     }
 
     #[test]
-    fn simple_query_headers() {
-        let mut engine = rhai::Engine::new();
-
-        HttpPackage::new().register_into_engine(&mut engine);
-
+    fn test_simple_query_headers() {
+        let engine = setup_engine();
         let body: rhai::Map = engine
             .eval(
                 r#"
@@ -223,5 +226,153 @@ client.request(#{
             .unwrap();
 
         println!("{body:#?}");
+    }
+
+    #[test]
+    fn test_bad_header_name() {
+        let engine = setup_engine();
+        let error = engine
+            .eval::<()>(
+                r#"
+let client = http::client();
+
+client.request(#{
+    "method": "GET",
+    "url": "http://example.com",
+    "headers": [
+        "test/abc: xxx",
+    ],
+    "output": "json",
+})
+"#,
+            )
+            .err()
+            .unwrap();
+
+        assert!(matches!(
+            *error,
+            rhai::EvalAltResult::ErrorRuntime(dynamic, position) if dynamic.to_string() == "invalid HTTP header name" &&
+            position == rhai::Position::new(4, 8)
+        ));
+    }
+
+    #[test]
+    fn test_bad_header_value() {
+        let engine = setup_engine();
+        // DEL (U+007F) is valid in Rhai strings but explicitly rejected by HeaderValue::from_str.
+        let error = engine
+            .eval::<()>(
+                "let client = http::client();\n\
+                 \n\
+                 client.request(#{\n\
+                     \"method\": \"GET\",\n\
+                     \"url\": \"http://example.com\",\n\
+                     \"headers\": [\n\
+                         \"X-Custom: \x7F\",\n\
+                     ],\n\
+                 })",
+            )
+            .err()
+            .unwrap();
+
+        assert!(matches!(
+            *error,
+            rhai::EvalAltResult::ErrorRuntime(dynamic, position) if dynamic.to_string() == "failed to parse header value" &&
+            position == rhai::Position::new(3, 8)
+        ));
+    }
+
+    #[test]
+    fn test_bad_header() {
+        let engine = setup_engine();
+        let error = engine
+            .eval::<()>(
+                r#"
+let client = http::client();
+
+client.request(#{
+    "method": "GET",
+    "url": "http://example.com",
+    "headers": [
+        "my header",
+    ],
+    "output": "json",
+})
+"#,
+            )
+            .err()
+            .unwrap();
+
+        assert!(matches!(
+            *error,
+            rhai::EvalAltResult::ErrorRuntime(dynamic, position) if dynamic.to_string() == "'my header' is not a valid header" &&
+            position == rhai::Position::new(4, 8)
+        ));
+    }
+
+    #[test]
+    fn test_invalid_parameters() {
+        let engine = setup_engine();
+        let error = engine
+            .eval::<()>(
+                r#"
+let client = http::client();
+
+client.request(#{
+    "output": "json",
+})
+"#,
+            )
+            .err()
+            .unwrap();
+
+        assert!(matches!(*error, rhai::EvalAltResult::ErrorParsing(_, _)));
+    }
+
+    #[test]
+    fn test_invalid_method() {
+        let engine = setup_engine();
+        let error = engine
+            .eval::<()>(
+                r#"
+let client = http::client();
+
+client.request(#{
+    "method": "INVALID METHOD",
+    "url": "http://example.com",
+})
+"#,
+            )
+            .err()
+            .unwrap();
+
+        assert!(matches!(
+            *error,
+            rhai::EvalAltResult::ErrorRuntime(dynamic, position) if dynamic.to_string().contains("invalid HTTP method") &&
+            position == rhai::Position::new(4, 8)
+        ));
+    }
+
+    #[test]
+    fn test_request_send_failure() {
+        let engine = setup_engine();
+        let error = engine
+            .eval::<()>(
+                r#"
+let client = http::client();
+
+client.request(#{
+    "method": "GET",
+    "url": "http://this-host-does-not-exist.invalid",
+})
+"#,
+            )
+            .err()
+            .unwrap();
+
+        assert!(matches!(
+            *error,
+            rhai::EvalAltResult::ErrorRuntime(_, position) if position == rhai::Position::new(4, 8)
+        ));
     }
 }
