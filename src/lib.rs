@@ -15,14 +15,14 @@ use rhai::{def_package, plugin::*};
 
 #[derive(Default, Clone, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Output {
+enum Output {
     #[default]
     Text,
     Json,
 }
 
 #[derive(Clone, serde::Deserialize)]
-pub struct Parameters {
+struct Parameters {
     method: String,
     url: String,
     #[serde(default)]
