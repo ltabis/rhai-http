@@ -1,6 +1,7 @@
 name: Outdated
 
 on:
+  pull_request: # TODO: remove me, for tests only.
   schedule: [cron: "00 7 * * *"]
 
 permissions:
