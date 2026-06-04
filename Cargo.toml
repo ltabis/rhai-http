@@ -8,8 +8,8 @@ license-file = "./LICENSE"
 repository = "https://github.com/ltabis/rhai-http"
 
 [dependencies]
-rhai = { version = "1.24.0", default-features = false, features = ["serde"] }
-reqwest = { version = "0.13.3", default-features = false, features = [
+rhai = { version = "1.25.1", default-features = false, features = ["serde"] }
+reqwest = { version = "0.13.4", default-features = false, features = [
     "blocking",
     "json",
     "rustls",
