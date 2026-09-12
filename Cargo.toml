@@ -8,10 +8,15 @@ license-file = "./LICENSE"
 repository = "https://github.com/ltabis/rhai-http"
 
 [dependencies]
-rhai = { version = "1.26.1", default-features = false, features = ["serde"] }
+rhai = { version = "1.26.1", default-features = false, features = [
+    "serde",
+    "serde_json",
+] }
 reqwest = { version = "0.13.5", default-features = false, features = [
     "blocking",
     "json",
     "rustls",
 ] }
 serde = { version = "1.0.229", default-features = false, features = ["derive"] }
+# Since rhai 1.26, the "smartstring/serde" feature was removed for no_std stuff. Add it back here.
+smartstring = { version = "1.0.1", features = ["serde"] }
